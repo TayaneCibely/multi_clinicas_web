@@ -11,14 +11,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import api from "@/services/api";
 import { AxiosError } from "axios";
+import { CheckCircle2 } from "lucide-react";
+
+interface ApiErrorResponse {
+  error?: string;
+  message?: string;
+  details?: Record<string, string>;
+}
+
+const unmask = (val: string) => val.replace(/\D/g, "");
+
+const isValidCPF = (cpfStr: string) => {
+  const cpf = unmask(cpfStr);
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  let sum = 0, rest;
+  for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(cpf.substring(9, 10))) return false;
+  sum = 0;
+  for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(cpf.substring(10, 11))) return false;
+  return true;
+};
 
 const signupSchema = z.object({
   name: z.string().min(3, "Nome completo obrigatório"),
   email: z.string().email("E-mail inválido"),
-  document: z.string().min(11, "CPF inválido"),
-  telefone: z.string().min(10, "Telefone inválido"),
+  document: z.string().refine((val) => isValidCPF(val), "CPF inválido"),
+  telefone: z.string().refine((val) => {
+    const unmasked = unmask(val);
+    return unmasked.length >= 10 && unmasked.length <= 11;
+  }, "Telefone inválido (deve conter DDD + número)"),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-  cep: z.string().min(8, "CEP inválido"),
+  cep: z.string().refine((val) => unmask(val).length === 8, "CEP inválido (exatamente 8 dígitos)"),
   logradouro: z.string().min(2, "Logradouro obrigatório"),
   numero: z.string().min(1, "Número obrigatório"),
   complemento: z.string().optional(),
@@ -32,6 +60,7 @@ type SignupForm = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
@@ -43,11 +72,11 @@ export default function SignupPage() {
       const payload = {
         nome: data.name,
         email: data.email,
-        cpf: data.document,
-        telefone: data.telefone,
+        cpf: unmask(data.document),
+        telefone: unmask(data.telefone),
         senhaHash: data.password,
         endereco: {
-          cep: data.cep,
+          cep: unmask(data.cep),
           logradouro: data.logradouro,
           numero: data.numero,
           complemento: data.complemento,
@@ -58,10 +87,10 @@ export default function SignupPage() {
       };
 
       await api.post("/pacientes", payload);
-      router.push(`/login?registered=true`);
+      setIsSuccess(true);
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {
-        const responseData = error.response.data as any;
+        const responseData = error.response.data as ApiErrorResponse;
         const apiMessage = responseData.message || responseData.details?.cpf || "Erro ao realizar cadastro. Verifique os dados informados.";
         setErrorMsg(apiMessage);
       } else {
@@ -69,6 +98,23 @@ export default function SignupPage() {
       }
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[85vh] p-6 bg-surface-page pb-24 text-center">
+        <div className="w-20 h-20 bg-status-success/10 text-status-success rounded-full flex items-center justify-center mb-6">
+          <CheckCircle2 size={48} />
+        </div>
+        <h1 className="text-2xl font-bold text-text-primary">Cadastro Realizado!</h1>
+        <p className="text-text-secondary mt-2 mb-8 max-w-md">
+          Sua conta foi criada com sucesso. Agora você já pode fazer login para agendar suas consultas.
+        </p>
+        <Button onClick={() => window.location.href = '/login?registered=true'} className="w-full max-w-xs h-12">
+          Ir para o Login
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-[85vh] p-6 bg-surface-page pb-24">
