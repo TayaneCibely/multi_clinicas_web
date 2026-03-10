@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   CircleDashed,
   ClipboardCheck,
+  Info,
   MessageCircleMore,
   Stethoscope,
   UserRound,
@@ -25,6 +26,7 @@ interface DailyAgendaTimelineProps {
       tipoPagamento?: "PARTICULAR" | "CONVENIO";
       nomePlanoSaude?: string | null;
       observacoes?: string | null;
+      tokenAutorizacao?: string | null;
     }
   >;
   loading: boolean;
@@ -32,6 +34,7 @@ interface DailyAgendaTimelineProps {
     appointmentId: number,
     nextStatus: "AGENDADO" | "CONFIRMADO" | "REALIZADO" | "FALTOU" | "CANCELADO_CLINICA"
   ) => void | Promise<void>;
+  onAppointmentClick: (agendamento: DailyAgendaTimelineProps["agendamentos"][number]) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -107,7 +110,12 @@ function StatusIcon({ status }: { status: string }) {
   return <CircleDashed className="size-3.5" />;
 }
 
-export default function DailyAgendaTimeline({ agendamentos, loading, onStatusChange }: DailyAgendaTimelineProps) {
+export default function DailyAgendaTimeline({
+  agendamentos,
+  loading,
+  onStatusChange,
+  onAppointmentClick,
+}: DailyAgendaTimelineProps) {
   const orderedAppointments = [...agendamentos].sort((left, right) => left.horaInicio.localeCompare(right.horaInicio));
 
   return (
@@ -118,7 +126,9 @@ export default function DailyAgendaTimeline({ agendamentos, loading, onStatusCha
             <h2 className="text-xl font-bold text-text-primary">Agenda</h2>
           </div>
 
-          <div className="text-right text-sm text-text-secondary">{agendamentos.length}</div>
+          <div className="text-right text-sm text-text-secondary">
+            {agendamentos.length} {agendamentos.length === 1 ? "consulta" : "consultas"}
+          </div>
         </div>
       </div>
 
@@ -127,7 +137,7 @@ export default function DailyAgendaTimeline({ agendamentos, loading, onStatusCha
       ) : agendamentos.length === 0 ? (
         <AgendaEmptyState />
       ) : (
-        <div className="px-4 md:px-6">
+        <div className="space-y-3 px-4 py-4 md:px-6">
           {orderedAppointments.map((agendamento) => {
             const status = statusConfig[agendamento.status] || statusConfig.AGENDADO;
             const currentStatusValue = agendamento.status === "CANCELADO_PACIENTE" ? "CANCELADO_CLINICA" : agendamento.status;
@@ -135,25 +145,44 @@ export default function DailyAgendaTimeline({ agendamentos, loading, onStatusCha
             return (
               <article
                 key={agendamento.id}
-                className="grid gap-4 border-b border-border-subtle py-4 last:border-b-0 md:grid-cols-[96px_minmax(0,1fr)_180px] md:items-start"
+                className="grid gap-4 rounded-[20px] border border-border-subtle bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.92))] p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float md:grid-cols-[112px_minmax(0,1fr)_180px] md:items-start"
               >
                 <div className="flex items-start gap-3 md:flex-col md:gap-2">
-                  <div className="md:pr-6">
+                  <div className="rounded-[18px] border border-border-subtle bg-surface-page px-4 py-3 shadow-sm md:min-w-[92px] md:pr-6">
                     <p className="text-3xl font-bold tracking-tight text-text-primary">{formatHour(agendamento.horaInicio)}</p>
                     <p className="text-sm text-text-secondary">até {formatHour(agendamento.horaFim)}</p>
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                  <div
+                    className="group min-w-0 cursor-pointer rounded-[18px] border border-transparent px-2 py-1 transition-all hover:border-accent-primary/10 hover:bg-accent-subtle/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/20"
+                    onClick={() => onAppointmentClick(agendamento)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Abrir detalhes da consulta de ${agendamento.nomePaciente}`}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onAppointmentClick(agendamento);
+                      }
+                    }}
+                  >
+                      <div className="flex flex-wrap items-center gap-2">
                         <UserRound className="size-4 text-accent-primary" />
-                        <h3 className="truncate text-lg font-bold text-text-primary">{agendamento.nomePaciente}</h3>
+                        <h3 className="truncate text-lg font-bold text-text-primary transition-colors group-hover:text-accent-primary">
+                          {agendamento.nomePaciente}
+                        </h3>
+                        <span className="inline-flex items-center gap-1 rounded-button border border-border-default bg-surface-card px-2 py-1 text-xs font-medium text-text-secondary shadow-sm transition-colors group-hover:border-accent-primary/20 group-hover:text-accent-primary">
+                          <Info className="size-3.5" />
+                          Detalhes
+                        </span>
                         <a
                           href={getWhatsAppHref(agendamento)}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-border-default bg-surface-card text-accent-primary transition-colors hover:bg-accent-subtle"
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-border-default bg-surface-card text-accent-primary shadow-sm transition-colors hover:bg-accent-subtle"
                           aria-label={`Abrir conversa no WhatsApp para ${agendamento.nomePaciente}`}
                         >
                           <MessageCircleMore className="size-4" />
@@ -190,6 +219,7 @@ export default function DailyAgendaTimeline({ agendamentos, loading, onStatusCha
                     }
                   >
                     <SelectTrigger
+                      onClick={(event) => event.stopPropagation()}
                       className={cn(
                         "h-10 w-full min-w-[156px] rounded-button border px-3 text-sm font-medium shadow-card focus-visible:ring-accent-primary/20",
                         status.color
