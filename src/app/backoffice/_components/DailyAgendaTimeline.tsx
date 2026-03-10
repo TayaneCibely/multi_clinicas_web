@@ -1,23 +1,67 @@
-import { CalendarX, Clock, Stethoscope, UserRound } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDashed,
+  ClipboardCheck,
+  MessageCircleMore,
+  Stethoscope,
+  UserRound,
+  XCircle,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
 import {
-  Agendamento,
-  calculateAppointmentStyle,
-  getHourScale,
-  ROW_HEIGHT,
-  statusConfig,
-} from "../_lib/dashboard";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { Agendamento, statusConfig } from "../_lib/dashboard";
 
 interface DailyAgendaTimelineProps {
-  agendamentos: Agendamento[];
+  agendamentos: Array<
+    Agendamento & {
+      tipoPagamento?: "PARTICULAR" | "CONVENIO";
+      nomePlanoSaude?: string | null;
+      observacoes?: string | null;
+    }
+  >;
   loading: boolean;
+  onStatusChange: (
+    appointmentId: number,
+    nextStatus: "AGENDADO" | "CONFIRMADO" | "REALIZADO" | "FALTOU" | "CANCELADO_CLINICA"
+  ) => void | Promise<void>;
+}
+
+const STATUS_OPTIONS = [
+  { value: "AGENDADO", label: "Agendado" },
+  { value: "CONFIRMADO", label: "Confirmado" },
+  { value: "REALIZADO", label: "Realizado" },
+  { value: "FALTOU", label: "Falta" },
+  { value: "CANCELADO_CLINICA", label: "Cancelado" },
+] as const;
+
+function formatHour(hora: string) {
+  return hora.slice(0, 5);
+}
+
+function formatModalidade(agendamento: DailyAgendaTimelineProps["agendamentos"][number]) {
+  if (agendamento.nomePlanoSaude) {
+    return agendamento.nomePlanoSaude;
+  }
+
+  return agendamento.tipoPagamento === "CONVENIO" ? "Convênio" : "Particular";
+}
+
+function getWhatsAppHref(agendamento: DailyAgendaTimelineProps["agendamentos"][number]) {
+  const mensagem = `Olá, ${agendamento.nomePaciente}. Estou entrando em contato sobre sua consulta de ${formatHour(agendamento.horaInicio)} com ${agendamento.nomeMedico}.`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
 }
 
 function AgendaLoadingState() {
   return (
-    <div className="flex flex-1 items-center justify-center">
+    <div className="flex min-h-[360px] flex-1 items-center justify-center rounded-panel border border-border-subtle bg-surface-card shadow-card">
       <div className="h-8 w-8 rounded-full border-4 border-accent-primary border-t-transparent animate-spin" />
     </div>
   );
@@ -25,80 +69,155 @@ function AgendaLoadingState() {
 
 function AgendaEmptyState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-      <div className="mb-6 flex h-32 w-32 items-center justify-center rounded-full border border-border-subtle bg-surface-card shadow-card">
-        <CalendarX size={48} className="text-text-muted" />
-      </div>
-      <h2 className="mb-2 text-xl font-bold text-text-primary">Mesa Limpa</h2>
+    <div className="flex min-h-[420px] flex-1 flex-col items-center justify-center rounded-panel border border-border-subtle bg-surface-card p-8 text-center shadow-card">
+      <svg viewBox="0 0 320 220" className="h-48 w-full max-w-[320px] text-text-muted/80" fill="none" aria-hidden>
+        <path d="M56 146 132 114 212 138 136 170Z" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M132 114 132 60 212 84 212 138" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M136 170 136 116" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M212 138 212 84 258 108 258 162 212 138Z" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M74 138 148 106 228 130" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 7" />
+        <path d="M148 106 148 68 228 92" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 7" />
+        <path d="M162 88 198 98" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M162 102 198 112" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M162 116 198 126" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M82 138 60 150 60 176 84 164 84 144" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M60 150 76 154" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M54 188 272 188" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 8" />
+        <circle cx="184" cy="54" r="10" stroke="var(--color-accent-primary)" strokeWidth="1.5" fill="var(--color-accent-subtle)" />
+        <path d="M184 36V22" stroke="var(--color-accent-primary)" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M176 28H192" stroke="var(--color-accent-primary)" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      <h2 className="mb-2 text-xl font-bold text-text-primary">Nenhum agendamento para este dia</h2>
       <p className="max-w-md text-text-secondary">
-        Nenhum agendamento encontrado para esta data. Aproveite para organizar a clínica ou verificar outras datas.
+        A agenda está limpa e pronta para ser organizada. Quando houver consultas neste dia, elas aparecerão aqui em ordem cronológica.
       </p>
     </div>
   );
 }
 
-export default function DailyAgendaTimeline({ agendamentos, loading }: DailyAgendaTimelineProps) {
-  const hours = getHourScale();
+function StatusIcon({ status }: { status: string }) {
+  if (status === "REALIZADO") {
+    return <CheckCircle2 className="size-3.5" />;
+  }
+
+  if (status === "FALTOU" || status === "CANCELADO_CLINICA" || status === "CANCELADO_PACIENTE") {
+    return <XCircle className="size-3.5" />;
+  }
+
+  return <CircleDashed className="size-3.5" />;
+}
+
+export default function DailyAgendaTimeline({ agendamentos, loading, onStatusChange }: DailyAgendaTimelineProps) {
+  const orderedAppointments = [...agendamentos].sort((left, right) => left.horaInicio.localeCompare(right.horaInicio));
 
   return (
-    <div className="relative flex flex-1 flex-col overflow-hidden rounded-panel border border-border-subtle bg-surface-page">
+    <section className="rounded-panel border border-border-subtle bg-surface-card shadow-card">
+      <div className="border-b border-border-subtle px-5 py-4 md:px-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-text-primary">Agenda</h2>
+          </div>
+
+          <div className="text-right text-sm text-text-secondary">{agendamentos.length}</div>
+        </div>
+      </div>
+
       {loading ? (
         <AgendaLoadingState />
       ) : agendamentos.length === 0 ? (
         <AgendaEmptyState />
       ) : (
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="relative min-w-[600px]">
-            {hours.map((hour) => (
-              <div key={hour} className="flex border-b border-border-subtle" style={{ height: `${ROW_HEIGHT}px` }}>
-                <div className="-mt-2 w-20 flex-shrink-0 pr-4 text-right text-xs font-medium text-text-secondary">
-                  {hour.toString().padStart(2, "0")}:00
-                </div>
-                <div className="flex-1 border-l border-border-subtle" />
-              </div>
-            ))}
+        <div className="px-4 md:px-6">
+          {orderedAppointments.map((agendamento) => {
+            const status = statusConfig[agendamento.status] || statusConfig.AGENDADO;
+            const currentStatusValue = agendamento.status === "CANCELADO_PACIENTE" ? "CANCELADO_CLINICA" : agendamento.status;
 
-            <div className="pointer-events-none absolute inset-y-0 left-20 right-0 top-0">
-              {agendamentos.map((agendamento) => {
-                const style = calculateAppointmentStyle(agendamento.horaInicio, agendamento.horaFim);
-                const status = statusConfig[agendamento.status] || statusConfig.AGENDADO;
-
-                return (
-                  <div
-                    key={agendamento.id}
-                    className={cn(
-                      "pointer-events-auto absolute left-4 right-4 flex min-h-[40px] cursor-pointer flex-col gap-1 overflow-hidden rounded-panel border p-3 shadow-card transition-shadow hover:shadow-float",
-                      status.color
-                    )}
-                    style={style}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1 truncate text-sm font-bold">
-                        <UserRound size={14} />
-                        {agendamento.nomePaciente}
-                      </span>
-                      <span className="rounded-full border border-white/20 bg-white/50 px-2 py-0.5 text-[10px] font-bold">
-                        {status.label}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 truncate text-xs opacity-90">
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {agendamento.horaInicio.substring(0, 5)} - {agendamento.horaFim.substring(0, 5)}
-                      </span>
-                      <span className="flex items-center gap-1 truncate">
-                        <Stethoscope size={12} />
-                        {agendamento.nomeMedico}
-                      </span>
-                    </div>
+            return (
+              <article
+                key={agendamento.id}
+                className="grid gap-4 border-b border-border-subtle py-4 last:border-b-0 md:grid-cols-[96px_minmax(0,1fr)_180px] md:items-start"
+              >
+                <div className="flex items-start gap-3 md:flex-col md:gap-2">
+                  <div className="md:pr-6">
+                    <p className="text-3xl font-bold tracking-tight text-text-primary">{formatHour(agendamento.horaInicio)}</p>
+                    <p className="text-sm text-text-secondary">até {formatHour(agendamento.horaFim)}</p>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
+
+                <div className="min-w-0">
+                  <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <UserRound className="size-4 text-accent-primary" />
+                        <h3 className="truncate text-lg font-bold text-text-primary">{agendamento.nomePaciente}</h3>
+                        <a
+                          href={getWhatsAppHref(agendamento)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-border-default bg-surface-card text-accent-primary transition-colors hover:bg-accent-subtle"
+                          aria-label={`Abrir conversa no WhatsApp para ${agendamento.nomePaciente}`}
+                        >
+                          <MessageCircleMore className="size-4" />
+                        </a>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                        <span className="inline-flex items-center gap-2 rounded-button border border-border-default bg-surface-card px-3 py-1.5">
+                          <Stethoscope className="size-3.5 text-accent-primary" />
+                          {agendamento.nomeMedico}
+                        </span>
+                        <span className="inline-flex items-center gap-2 rounded-button border border-border-default bg-surface-card px-3 py-1.5">
+                          <ClipboardCheck className="size-3.5 text-accent-primary" />
+                          {formatModalidade(agendamento)}
+                        </span>
+                      </div>
+
+                      {agendamento.observacoes ? (
+                        <p className="mt-3 rounded-panel bg-surface-page px-3 py-2 text-sm text-text-secondary">
+                          {agendamento.observacoes}
+                        </p>
+                      ) : null}
+                  </div>
+                </div>
+
+                <div className="self-start">
+                  <Select
+                    value={currentStatusValue}
+                    onValueChange={(value) =>
+                      onStatusChange(
+                        agendamento.id,
+                        value as "AGENDADO" | "CONFIRMADO" | "REALIZADO" | "FALTOU" | "CANCELADO_CLINICA"
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "h-10 w-full min-w-[156px] rounded-button border px-3 text-sm font-medium shadow-card focus-visible:ring-accent-primary/20",
+                        status.color
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        <StatusIcon status={currentStatusValue} />
+                        <SelectValue placeholder="Status" />
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-panel border-border-default bg-surface-elevated text-text-primary shadow-float">
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem
+                          key={option.value}
+                          value={option.value}
+                          className="rounded-panel text-text-primary focus:bg-accent-subtle focus:text-accent-primary"
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
-    </div>
+    </section>
   );
 }

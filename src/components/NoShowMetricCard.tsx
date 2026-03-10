@@ -1,101 +1,63 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Building2 } from "lucide-react";
-import NoShowEmptySvg from "@/components/no-show-metric/NoShowEmptySvg";
-import NoShowFlowSvg from "@/components/no-show-metric/NoShowFlowSvg";
+import { Dot, TrendingDown, TrendingUp } from "lucide-react";
 
 interface NoShowMetricCardProps {
   realizadoCount: number;
   faltouCount: number;
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
 export default function NoShowMetricCard({ realizadoCount, faltouCount }: NoShowMetricCardProps) {
   const concluidoCount = realizadoCount + faltouCount;
   const hasCompletedData = concluidoCount > 0;
-  const noShowRate = concluidoCount > 0 ? faltouCount / concluidoCount : 0;
-  const comparecimentoRate = concluidoCount > 0 ? realizadoCount / concluidoCount : 0;
-
-  const mainStrokeWidth = 2 + comparecimentoRate * 2;
-  const branchStrokeWidth = 1.5 + noShowRate;
-  const solidNodes = clamp(realizadoCount, 0, 5);
-  const missedNodes = clamp(faltouCount, 0, 4);
-  const travelDuration = `${clamp(6 - noShowRate * 2.5, 3.2, 6)}s`;
-  const branchDuration = `${clamp(7 + noShowRate * 5, 7, 11)}s`;
-  const noShowPercent = Math.round(noShowRate * 100);
+  const faltasPercent = concluidoCount > 0 ? Math.round((faltouCount / concluidoCount) * 100) : 0;
+  const presencaPercent = concluidoCount > 0 ? 100 - faltasPercent : 0;
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="rounded-card border border-border-subtle bg-surface-card p-5 shadow-card"
+      className="rounded-card border border-border-subtle bg-surface-card p-4 shadow-card"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-accent-primary">Absenteísmo do dia</p>
-          <h2 className="mt-1 text-lg font-bold text-text-primary">Fluxo de pacientes até a clínica</h2>
-          <p className="mt-2 max-w-xl text-sm text-text-secondary">
-            A linha principal mostra quem concluiu atendimento. A bifurcação fantasma representa as perdas por falta.
-          </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-text-primary">Absenteísmo</h2>
+          <p className="mt-1 text-sm text-text-secondary">{concluidoCount} consultas resolvidas</p>
         </div>
 
-        <div className="rounded-card border border-border-subtle bg-surface-page px-4 py-3 text-right shadow-card">
-          <p className="text-xs font-medium text-text-secondary">Taxa de falta</p>
-          <p className="text-2xl font-bold text-text-primary">{noShowPercent}%</p>
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px] xl:items-center">
-        <div className="overflow-hidden rounded-card border border-border-subtle bg-surface-page px-4 py-4">
-          {hasCompletedData ? (
-            <NoShowFlowSvg
-              mainStrokeWidth={mainStrokeWidth}
-              branchStrokeWidth={branchStrokeWidth}
-              solidNodes={solidNodes}
-              missedNodes={missedNodes}
-              travelDuration={travelDuration}
-              branchDuration={branchDuration}
-            />
-          ) : (
-            <div className="flex min-h-[148px] items-center gap-4 rounded-card border border-dashed border-border-default bg-surface-card px-5 py-4">
-              <NoShowEmptySvg />
-
-              <div>
-                <h3 className="text-base font-bold text-text-primary">Sem sinal concluído nesta data</h3>
-                <p className="mt-1 text-sm text-text-secondary">
-                  A visualização da rota aparece quando houver consultas marcadas como realizadas ou faltosas.
-                </p>
-              </div>
+        <div className="flex items-start gap-5 self-start md:justify-end">
+          <div className="text-right">
+            <div className="flex items-center justify-end gap-1.5 text-text-secondary">
+              <TrendingUp className="size-3.5 text-accent-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Presenças</span>
             </div>
-          )}
-        </div>
+            <p className="mt-1 text-2xl font-bold leading-none text-text-primary">{presencaPercent}%</p>
+          </div>
 
-        <div className="grid grid-cols-3 gap-3 xl:grid-cols-1">
-          <div className="rounded-card border border-border-subtle bg-surface-page p-4 shadow-card">
-            <p className="text-xs font-medium text-text-secondary">Realizados</p>
-            <p className="mt-1 text-2xl font-bold text-text-primary">{realizadoCount}</p>
-          </div>
-          <div className="rounded-card border border-border-subtle bg-surface-page p-4 shadow-card">
-            <p className="text-xs font-medium text-text-secondary">Faltas</p>
-            <p className="mt-1 text-2xl font-bold text-text-primary">{faltouCount}</p>
-          </div>
-          <div className="rounded-card border border-border-subtle bg-surface-page p-4 shadow-card">
-            <p className="text-xs font-medium text-text-secondary">Concluídos</p>
-            <p className="mt-1 text-2xl font-bold text-text-primary">{concluidoCount}</p>
+          <div className="text-right">
+            <div className="flex items-center justify-end gap-1.5 text-text-secondary">
+              <TrendingDown className="size-3.5 text-status-error" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Faltas</span>
+            </div>
+            <p className="mt-1 text-2xl font-bold leading-none text-status-error">{faltasPercent}%</p>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-sm text-text-secondary">
-        <Building2 className="size-4 text-accent-primary" />
-        {hasCompletedData
-          ? `${realizadoCount} pacientes chegaram ao destino de atendimento, enquanto ${faltouCount} se dissiparam antes da clínica.`
-          : "Assim que houver consultas realizadas ou faltosas nesta data, a rota de comparecimento aparecerá aqui."}
+      <div className="mt-4 rounded-card border border-border-subtle bg-surface-page px-4 py-4 shadow-card">
+        <div className="flex flex-wrap items-center gap-1 text-sm text-text-secondary">
+          <span className="font-medium text-text-primary">{realizadoCount}</span>
+          <span>realizadas</span>
+          <Dot className="size-3.5 text-text-muted" />
+          <span className="font-medium text-text-primary">{faltouCount}</span>
+          <span>faltas</span>
+        </div>
+
+        {!hasCompletedData ? (
+          <p className="mt-2 text-sm text-text-muted">Aguardando consultas realizadas ou faltas.</p>
+        ) : null}
       </div>
     </motion.section>
   );
