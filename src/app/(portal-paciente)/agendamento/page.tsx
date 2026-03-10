@@ -13,18 +13,6 @@ interface Especialidade { id: number; nome: string; }
 interface Medico { id: number; nome: string; especialidades: string[]; }
 interface Horario { time: string; period: "manha" | "tarde"; available: boolean; }
 
-const fetchGradeHorario = async (...args: [number, string]): Promise<string[]> => {
-  void args;
-  await new Promise(r => setTimeout(r, 600));
-  return ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
-};
-
-const fetchAgendamentosOcupados = async (...args: [number, string]): Promise<string[]> => {
-  void args;
-  await new Promise(r => setTimeout(r, 400));
-  return ["09:00", "15:00", "16:00"];
-};
-
 function SolarArc({ horarios, selectedTime, onSelect }: { horarios: Horario[], selectedTime: string | null, onSelect: (t: string) => void }) {
   const manha = horarios.filter(h => h.period === 'manha');
   const tarde = horarios.filter(h => h.period === 'tarde');
@@ -140,17 +128,18 @@ function AgendamentoContent() {
       setSelectedTime(null);
       
       try {
-        const [grade, ocupados] = await Promise.all([
-          fetchGradeHorario(selectedMed.id, selectedDate),
-          fetchAgendamentosOcupados(selectedMed.id, selectedDate)
-        ]);
+        const response = await api.get("/agendamento/disponibilidade", {
+            params: { medicoId: selectedMed.id, data: selectedDate}
+        });
 
-        const horariosProcessados: Horario[] = grade.map(time => {
+        const availabreTimes: string[] = response.data;
+
+        const horariosProcessados: Horario[] = availabreTimes.map(time => {
           const hour = parseInt(time.split(":")[0]);
           return {
             time,
             period: hour < 12 ? "manha" : "tarde",
-            available: !ocupados.includes(time)
+            available: true
           };
         });
 
