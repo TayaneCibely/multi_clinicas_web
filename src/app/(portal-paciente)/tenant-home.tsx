@@ -82,23 +82,23 @@ function MedicoOrbitAvatar({ nome }: { nome: string }) {
 }
 
 function MedicosLoadingState() {
-  return Array.from({ length: 3 }).map((_, index) => (
+  return Array.from({ length: 6 }).map((_, index) => (
     <div
       key={index}
-      className="rounded-card border border-border-subtle bg-surface-card p-4 shadow-card"
+      className="flex flex-col justify-between rounded-card border border-border-subtle bg-surface-card p-4 sm:p-5 shadow-card"
     >
       <div className="flex items-start gap-4">
-        <div className="h-20 w-20 shrink-0 animate-pulse rounded-full border border-border-subtle bg-surface-page" />
+        <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 animate-pulse rounded-full border border-border-subtle bg-surface-page" />
         <div className="flex-1 space-y-3 pt-2">
           <div className="h-4 w-2/3 animate-pulse rounded-full bg-surface-page" />
           <div className="h-3 w-1/3 animate-pulse rounded-full bg-surface-page" />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <div className="h-7 w-24 animate-pulse rounded-full bg-surface-page" />
             <div className="h-7 w-20 animate-pulse rounded-full bg-surface-page" />
           </div>
         </div>
       </div>
-      <div className="mt-4 h-10 animate-pulse rounded-full bg-surface-page" />
+      <div className="mt-5 h-10 w-full animate-pulse rounded-full bg-surface-page" />
     </div>
   ));
 }
@@ -194,24 +194,24 @@ export default function TenantHomePage() {
       <header className="relative overflow-hidden border-b border-border-subtle bg-surface-card">
         <PulseTexture />
 
-        <div className="relative mx-auto flex w-full max-w-md flex-col gap-4 px-6 py-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-card bg-[image:var(--background-image-accent-gradient)] text-xl font-bold text-white shadow-float">
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-8 md:py-12">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card bg-[image:var(--background-image-accent-gradient)] text-xl font-bold text-white shadow-float md:h-20 md:w-20 md:text-3xl lg:rounded-2xl">
               {tenant.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-text-secondary">Atendimento em {tenant}</p>
-              <h1 className="text-2xl font-bold leading-tight text-text-primary">
+              <p className="text-sm font-medium text-text-secondary md:text-base">Atendimento em {tenant}</p>
+              <h1 className="text-2xl font-bold leading-tight text-text-primary md:text-4xl">
                 Escolha seu médico
               </h1>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-sm text-text-secondary md:max-w-md md:text-base">
                 Encontre o profissional ideal e siga direto para os horários disponíveis.
               </p>
             </div>
           </div>
 
-          <div className="rounded-card border border-border-subtle bg-surface-elevated p-4 shadow-card">
-            <div className="flex items-start justify-between gap-4">
+          <div className="shrink-0 rounded-card border border-border-subtle bg-surface-elevated p-4 shadow-card md:w-72 md:p-5">
+            <div className="flex items-start justify-between gap-4 md:flex-col md:items-start md:gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-accent-primary">
                   Próximo passo
@@ -228,14 +228,14 @@ export default function TenantHomePage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6">
-        <div className="mx-auto flex w-full max-w-md flex-col gap-4">
-          <section className="rounded-card border border-border-subtle bg-surface-card p-4 shadow-card">
+      <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 md:gap-8">
+          <section className="rounded-card border border-border-subtle bg-surface-card p-4 shadow-card md:p-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted md:left-4 md:h-5 md:w-5" size={18} />
               <Input
                 placeholder="Buscar por médico ou especialidade..."
-                className="h-12 rounded-panel border-border-default bg-surface-card pl-10 text-text-primary shadow-none"
+                className="h-12 rounded-panel border-border-default bg-surface-card pl-10 text-text-primary shadow-none md:h-14 md:pl-12 md:text-lg"
                 value={busca}
                 onChange={(event) => setBusca(event.target.value)}
               />
@@ -290,7 +290,7 @@ export default function TenantHomePage() {
             </div>
           </section>
 
-          <motion.div layout className="space-y-3">
+          <motion.div layout className="min-h-[400px]">
             <AnimatePresence mode="popLayout">
               {isLoading ? (
                 <motion.div
@@ -298,11 +298,8 @@ export default function TenantHomePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-3"
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
-                  <div className="flex justify-center py-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-accent-primary" />
-                  </div>
                   <MedicosLoadingState />
                 </motion.div>
               ) : error ? (
@@ -314,62 +311,73 @@ export default function TenantHomePage() {
                   exit={{ opacity: 0, y: -8 }}
                   className="rounded-card border border-border-subtle bg-surface-card p-6 text-center shadow-card"
                 >
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-subtle text-accent-primary">
-                    <RotateCw className="h-5 w-5" />
+                  <div className="mx-auto flex w-full max-w-md flex-col text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-subtle text-accent-primary">
+                      <RotateCw className="h-5 w-5" />
+                    </div>
+                    <h2 className="mt-4 text-lg font-bold text-text-primary">Catálogo indisponível</h2>
+                    <p className="mt-2 text-sm text-text-secondary">{error}</p>
+                    <Button type="button" className="mx-auto mt-5 w-fit" onClick={handleRetry}>
+                      Tentar novamente
+                    </Button>
                   </div>
-                  <h2 className="mt-4 text-lg font-bold text-text-primary">Catálogo indisponível</h2>
-                  <p className="mt-2 text-sm text-text-secondary">{error}</p>
-                  <Button type="button" className="mt-5" onClick={handleRetry}>
-                    Tentar novamente
-                  </Button>
                 </motion.div>
               ) : medicosFiltrados.length > 0 ? (
-                medicosFiltrados.map((medico) => (
-                  <motion.article
-                    key={medico.id}
-                    layout
-                    initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                    className="rounded-card border border-border-subtle bg-surface-card p-4 shadow-card"
-                  >
-                    <div className="flex items-start gap-4">
-                      <MedicoOrbitAvatar nome={medico.nome} />
+                <motion.div
+                  key="list"
+                  className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  {medicosFiltrados.map((medico) => (
+                    <motion.article
+                      key={medico.id}
+                      layout
+                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col justify-between rounded-card border border-border-subtle bg-surface-card p-4 shadow-card sm:p-5"
+                    >
+                      <div>
+                        <div className="flex items-start gap-4">
+                          <MedicoOrbitAvatar nome={medico.nome} />
 
-                      <div className="min-w-0 flex-1 pt-1">
-                        <h3 className="text-lg font-bold text-text-primary">{medico.nome}</h3>
-                        <p className="mt-1 text-sm text-text-secondary">
-                          {medico.especialidades[0] ?? "Especialidade não informada"}
-                        </p>
+                          <div className="min-w-0 flex-1 pt-1">
+                            <h3 className="line-clamp-2 text-lg font-bold leading-tight text-text-primary sm:text-xl">
+                              {medico.nome}
+                            </h3>
+                            <p className="mt-1 text-sm text-text-secondary">
+                              {medico.especialidades[0] ?? "Especialidade não informada"}
+                            </p>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {medico.especialidades.slice(0, 3).map((especialidade) => (
-                            <span
-                              key={especialidade}
-                              className="rounded-full bg-accent-subtle px-3 py-1 text-xs font-medium text-accent-primary"
-                            >
-                              {especialidade}
-                            </span>
-                          ))}
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {medico.especialidades.slice(0, 3).map((especialidade) => (
+                                <span
+                                  key={especialidade}
+                                  className="rounded-full bg-accent-subtle px-3 py-1 text-xs font-medium text-accent-primary"
+                                >
+                                  {especialidade}
+                                </span>
+                              ))}
 
-                          {medico.especialidades.length === 0 && (
-                            <span className="rounded-full bg-surface-page px-3 py-1 text-xs font-medium text-text-secondary">
-                              Sem especialidade vinculada
-                            </span>
-                          )}
+                              {medico.especialidades.length === 0 && (
+                                <span className="rounded-full bg-surface-page px-3 py-1 text-xs font-medium text-text-secondary">
+                                  Sem especialidade vinculada
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <Button asChild variant="outline" className="mt-4 w-full justify-between rounded-full">
-                      <Link href="/agendamento">
-                        Ver agenda
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </motion.article>
-                ))
+                      <Button asChild variant="outline" className="mt-5 w-full justify-between rounded-full">
+                        <Link href="/agendamento">
+                          Ver agenda
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </motion.article>
+                  ))}
+                </motion.div>
               ) : (
                 <motion.div
                   key="empty"
@@ -398,9 +406,9 @@ export default function TenantHomePage() {
                     </svg>
                   </div>
 
-                  <div className="mt-4 text-center">
-                    <h2 className="text-lg font-bold text-text-primary">Nenhum profissional encontrado</h2>
-                    <p className="mt-2 text-sm text-text-secondary">
+                  <div className="mx-auto mt-4 max-w-md text-center">
+                    <h2 className="text-lg font-bold text-text-primary md:text-xl">Nenhum profissional encontrado</h2>
+                    <p className="mt-2 text-sm text-text-secondary md:text-base">
                       Ajuste a busca ou remova o filtro de especialidade para ampliar os resultados.
                     </p>
                   </div>
