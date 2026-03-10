@@ -37,6 +37,7 @@ export default function DesktopTopBar() {
   const navItems = [
     { label: "Início", icon: Home, href: "" },
     { label: "Minhas Consultas", icon: Calendar, href: "/consultas" },
+    { label: "Perfil", icon: User, href: "/perfil" },
   ];
 
   return (
@@ -87,7 +88,7 @@ export default function DesktopTopBar() {
             {user?.role !== 'ADMIN' && (
               <p>Olá, {user?.name}, sua role é {user?.role}</p>
             )}
-            <div className="flex items-center gap-2 border-l border-border-default pl-4 ml-2">
+            <div onClick={() => router.push("/perfil")} className="flex items-center gap-2 border-l border-border-default pl-4 ml-2 cursor-pointer">
               <div className="w-8 h-8 rounded-full bg-surface-page border border-border-default flex items-center justify-center">
                 <User size={16} className="text-text-secondary" />
               </div>
