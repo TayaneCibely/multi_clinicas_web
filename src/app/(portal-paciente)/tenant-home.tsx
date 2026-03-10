@@ -5,12 +5,10 @@ import Link from "next/link";
 import {
   ArrowRight,
   HeartPulse,
-  Loader2,
   Pill,
   Plus,
   RotateCw,
   Search,
-  UserRound,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -118,7 +116,7 @@ export default function TenantHomePage() {
       const hostname = window.location.host;
       const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
 
-      let sub = hostname.replace(`.${rootDomain}`, '');
+      const sub = hostname.replace(`.${rootDomain}`, '');
 
       if (storedName) {
         setTenant(storedName);
@@ -370,7 +368,9 @@ export default function TenantHomePage() {
                       </div>
 
                       <Button asChild variant="outline" className="mt-5 w-full justify-between rounded-full">
-                        <Link href="/agendamento">
+                        <Link
+                          href={`/agendamento?medicoId=${medico.id}&especialidade=${encodeURIComponent(medico.especialidades[0] || "")}`}
+                        >
                           Ver agenda
                           <ArrowRight className="h-4 w-4" />
                         </Link>
