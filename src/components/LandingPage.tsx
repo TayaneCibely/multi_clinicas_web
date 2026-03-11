@@ -10,6 +10,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
 
 // ─── Topography Texture (SVG ambient) ────────────────────────────────────────
 
@@ -99,14 +100,7 @@ export default function LandingPage() {
 
             {/* ── Navbar ──────────────────────────────────────────────────────── */}
             <nav className="relative z-10 flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
-                <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-panel bg-[image:var(--background-image-accent-gradient)]">
-                        <span className="text-white text-sm font-bold leading-none">M</span>
-                    </div>
-                    <span className="text-text-primary font-bold text-lg">
-                        MultiClínicas
-                    </span>
-                </div>
+                <BrandLogo />
 
                 <div className="flex items-center gap-3">
                     <Link href="/admin-login">

@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AxiosError } from "axios";
 import { Loader2, LogIn, LayoutDashboard } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Input } from "@/components/ui/input";
 import {
     Form,
@@ -95,8 +95,8 @@ export default function AdminLoginPage() {
                 <div className="absolute -right-16 -top-16 w-32 h-32 bg-accent-secondary/5 blur-3xl rounded-full" />
 
                 <div className="text-center mb-8 relative">
-                    <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-surface-page border border-border-default shadow-sm mb-4">
-                        <LayoutDashboard className="size-6 text-accent-primary" />
+                    <div className="mb-4 flex justify-center">
+                        <BrandLogo size={60} withText={false} />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
                         MultiClínicas Master

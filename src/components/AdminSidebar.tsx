@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Building2, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const navItems = [
     { label: "Clínicas", href: "/admin/clinicas", icon: Building2 },
@@ -23,16 +24,11 @@ export function AdminSidebar() {
     return (
         <aside className="flex flex-col w-64 min-h-screen bg-surface-page border-r border-border-subtle">
             {/* ── Brand ─────────────────────────────────────────────────────── */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-border-subtle">
-                <div className="flex size-8 items-center justify-center rounded-panel bg-[image:var(--background-image-accent-gradient)]">
-                    <span className="text-white text-sm font-bold leading-none">M</span>
-                </div>
-                <div>
-                    <h1 className="text-text-primary text-sm font-bold leading-tight">
-                        MultiClínicas
-                    </h1>
-                    <p className="text-text-muted text-xs">Portal Master</p>
-                </div>
+            <div className="px-6 py-5 border-b border-border-subtle">
+                <BrandLogo size={32} />
+                <p className="text-text-muted text-[10px] uppercase font-bold tracking-widest mt-1 ml-11">
+                    Portal Master
+                </p>
             </div>
 
             {/* ── Navigation ────────────────────────────────────────────────── */}
