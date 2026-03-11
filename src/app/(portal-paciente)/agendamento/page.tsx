@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ArrowLeft, UserRound, Stethoscope, Calendar as CalendarIcon, Clock, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ArrowLeft, UserRound, Stethoscope, Calendar as CalendarIcon, Clock, CheckCircle2, CreditCard } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 interface Especialidade { id: number; nome: string; }
 interface Medico { id: number; nome: string; especialidades: string[]; }
+interface PlanoSaude { id: number; nome: string; ativo: boolean; }
 interface Horario { time: string; period: "manha" | "tarde"; available: boolean; }
 
 function SolarArc({ horarios, selectedTime, onSelect }: { horarios: Horario[], selectedTime: string | null, onSelect: (t: string) => void }) {
@@ -69,11 +70,14 @@ function AgendamentoContent() {
   const [selectedMed, setSelectedMed] = useState<Medico | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [tipoPagamento, setTipoPagamento] = useState<"PARTICULAR" | "CONVENIO">("PARTICULAR");
+  const [selectedPlanoId, setSelectedPlanoId] = useState<number | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
+  const [planos, setPlanos] = useState<PlanoSaude[]>([]);
   const [isLoadingDados, setIsLoadingDados] = useState(true);
 
   const [availableHorarios, setAvailableHorarios] = useState<Horario[]>([]);
@@ -87,15 +91,17 @@ function AgendamentoContent() {
   useEffect(() => {
     const fetchDadosIniciais = async () => {
       try {
-        const [resEsp, resMed] = await Promise.all([
+        const [resEsp, resMed, resPlanos] = await Promise.all([
           api.get("/especialidades"),
-          api.get("/medicos/ativos")
+          api.get("/medicos/ativos"),
+          api.get("/planos-saude")
         ]);
         const especialidadesData = resEsp.data;
         const medicosData = resMed.data;
 
         setEspecialidades(especialidadesData);
         setMedicos(medicosData);
+        setPlanos(resPlanos.data.filter((p: PlanoSaude) => p.ativo));
 
         if (paramMedicoId && paramEspecialidade) {
           const medicoEncontrado = medicosData.find((medico: Medico) => medico.id === Number(paramMedicoId));
@@ -264,6 +270,40 @@ function AgendamentoContent() {
               </div>
 
               <div className="space-y-4">
+                <h2 className="text-lg font-bold text-text-primary flex items-center gap-2"><CreditCard className="text-accent-primary" size={20} /> Tipo de Atendimento</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => { setTipoPagamento("PARTICULAR"); setSelectedPlanoId(null); }}
+                    className={cn("p-4 rounded-panel border text-sm font-bold transition-all", tipoPagamento === "PARTICULAR" ? "bg-accent-primary text-white border-accent-primary" : "bg-surface-card text-text-primary border-border-default")}
+                  >
+                    Particular
+                  </button>
+                  <button
+                    onClick={() => setTipoPagamento("CONVENIO")}
+                    className={cn("p-4 rounded-panel border text-sm font-bold transition-all", tipoPagamento === "CONVENIO" ? "bg-accent-primary text-white border-accent-primary" : "bg-surface-card text-text-primary border-border-default")}
+                  >
+                    Convênio
+                  </button>
+                </div>
+
+                {tipoPagamento === "CONVENIO" && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="pt-2">
+                    <select
+                      value={selectedPlanoId || ""}
+                      onChange={(e) => setSelectedPlanoId(Number(e.target.value))}
+                      className="w-full h-12 px-3 rounded-md border border-border-subtle bg-surface-card text-text-primary focus:outline-none focus:border-accent-primary"
+                    >
+                      <option value="" disabled>Selecione o plano de saúde...</option>
+                      {planos.map(p => (
+                        <option key={p.id} value={p.id}>{p.nome}</option>
+                      ))}
+                    </select>
+                    {planos.length === 0 && <p className="text-xs text-status-error mt-2">Nenhum convênio disponível nesta clínica.</p>}
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="space-y-4">
                 <h2 className="text-lg font-bold text-text-primary flex items-center gap-2"><CalendarIcon className="text-accent-primary" size={20} /> Escolha a Data</h2>
                 <Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="h-12 bg-surface-card" />
               </div>
@@ -281,8 +321,8 @@ function AgendamentoContent() {
 
               <Button 
                 onClick={handleFinish} 
-                disabled={!selectedTime || isFinishing} 
-                className="w-full h-14 text-lg font-bold bg-accent-gradient mt-8 text-white border-0 hover:opacity-90 transition-opacity"
+                disabled={!selectedTime || isFinishing || (tipoPagamento === "CONVENIO" && !selectedPlanoId)} 
+                className="w-full h-14 text-lg font-bold bg-accent-gradient mt-8 text-white border-0 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {isFinishing ? "Finalizando..." : "Confirmar Agendamento"}
               </Button>
